@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Bell, BookOpen, Gamepad2, Home, Heart, Apple, Coffee, Pizza, Utensils, AlertCircle, Clock, CheckCircle } from "lucide-react";
+//import NavButton from "./components/NavButton";
+import Education from "./components/Education";
 //import "index.css";
 const LamboraApp = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -8,6 +10,9 @@ const LamboraApp = () => {
   const [health, setHealth] = useState(100);
   const [nextMealTime, setNextMealTime] = useState(null);
   const [notificationPermission, setNotificationPermission] = useState("default");
+
+  // State global untuk menghitung makanan buruk agar Status Home bisa berubah
+  const [badFoodCount, setBadFoodCount] = useState(0);
 
   // Request notification permission on load
   useEffect(() => {
@@ -27,25 +32,25 @@ const LamboraApp = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "home":
-        return <HomeView setActiveTab={setActiveTab} />;
+        return <HomeView setActiveTab={setActiveTab} badFoodCount={badFoodCount} />;
       case "tracker":
         return <TrackerView nextMealTime={nextMealTime} setNextMealTime={setNextMealTime} requestNotification={requestNotification} setHealth={setHealth} />;
       case "edukasi":
-        return <EducationView />;
+        return <Education />;
       case "game":
-        return <GameView health={health} setHealth={setHealth} nextMealTime={nextMealTime} />;
+        return <GameView health={health} setHealth={setHealth} nextMealTime={nextMealTime} badFoodCount={badFoodCount} setBadFoodCount={setBadFoodCount} />;
       default:
-        return <HomeView setActiveTab={setActiveTab} />;
+        return <HomeView setActiveTab={setActiveTab} badFoodCount={badFoodCount} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-pink-50 text-gray-800 font-sans flex flex-col max-w mx-auto shadow-2xl overflow-hidden border-x border-pink-100">
       {/* Header */}
-      <header className="bg-linear-to-r from-pink-500 to-rose-400 p-4 text-white shadow-md z-10">
+      <header className="bg-linear-to-r bg-[#cdb891] p-4 text-white shadow-md z-10">
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold flex items-center gap-2">
-            <Heart className="fill-white" size={24} /> Lambora
+            <img src="lambora-logo.png" alt="" className="w-30 h-10 " />
           </h1>
           <div className="text-xs bg-white/20 px-2 py-1 rounded-full">Sehat Bersama</div>
         </div>
@@ -74,63 +79,73 @@ const NavButton = ({ active, onClick, icon, label }) => (
   </button>
 );
 
-const HomeView = ({ setActiveTab }) => (
-  <div className="space-y-6 animate-fade-in">
-    <div className="bg-white p-6 rounded-3xl shadow-sm border border-pink-100 text-center">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Halo, Sobat Lambora!</h2>
-      <p className="text-gray-500 text-sm mb-4">Sudahkah kamu menjaga asam lambungmu hari ini?</p>
-      <div className="grid grid-cols-2 gap-3">
-        <button onClick={() => setActiveTab("tracker")} className="bg-rose-100 text-rose-600 p-3 rounded-2xl text-sm font-bold hover:bg-rose-200 transition">
-          ⏰ Atur Makan
-        </button>
-        <button onClick={() => setActiveTab("game")} className="bg-emerald-100 text-emerald-600 p-3 rounded-2xl text-sm font-bold hover:bg-emerald-200 transition">
-          🎮 Main Game
-        </button>
-      </div>
-    </div>
+const HomeView = ({ setActiveTab, badFoodCount }) => {
+  // Logic Status: Jika makan buruk >= 3 kali, status jadi Warning (Merah)
+  const isUnhealthy = badFoodCount >= 3;
 
-    <div className="space-y-2">
-      <h3 className="font-bold text-gray-700 px-1">Status Terkini</h3>
-      <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-2xl shadow-lg flex items-center justify-between">
-        <div>
-          <p className="text-blue-100 text-xs">Kondisi Lambung</p>
-          <p className="font-bold text-lg">Stabil</p>
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* --- Header Section --- */}
+      <div className="bg-white p-6 rounded-3xl shadow-sm border border-pink-100 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Halo, Sobat Lambora!</h2>
+        <p className="text-gray-500 text-sm mb-4">Sudahkah kamu menjaga asam lambungmu hari ini?</p>
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={() => setActiveTab("tracker")} className="bg-rose-100 text-rose-600 p-3 rounded-2xl text-sm font-bold hover:bg-rose-200 transition">
+            ⏰ Atur Makan
+          </button>
+          <button onClick={() => setActiveTab("game")} className="bg-emerald-100 text-emerald-600 p-3 rounded-2xl text-sm font-bold hover:bg-emerald-200 transition">
+            🎮 Main Game
+          </button>
         </div>
-        <CheckCircle size={32} className="text-blue-200" />
       </div>
+
+      {/* --- Status Section --- */}
+      <div className="space-y-2">
+        <h3 className="font-bold text-gray-700 px-1">Status Terkini</h3>
+
+        {/* Kartu Status Utama */}
+        <div
+          className={`
+        p-4 rounded-2xl shadow-lg flex items-center justify-between transition-colors duration-500
+        ${isUnhealthy ? "bg-gradient-to-br from-red-500 to-orange-500" : "bg-gradient-to-br from-green-500 to-green-600"}
+        text-white
+      `}
+        >
+          <div>
+            <p className={`${isUnhealthy ? "text-red-100" : "text-green-100"} text-xs`}>Kondisi Lambung</p>
+            <p className="font-bold text-lg">{isUnhealthy ? "Tidak Sehat" : "Stabil"}</p>
+
+            {/* Badge status kecil di dalam kartu */}
+            <p className="text-[10px] mt-1 bg-white/20 px-2 py-0.5 rounded-full inline-block">{isUnhealthy ? "Butuh Perhatian!" : "Aman"}</p>
+          </div>
+
+          {/* Icon */}
+          {isUnhealthy ? <AlertCircle size={32} className="text-red-100 animate-pulse" /> : <CheckCircle size={32} className="text-green-100" />}
+        </div>
+
+        {/* --- ALERT BOX (Hanya Muncul Jika Sakit/isUnhealthy = true) --- */}
+        {isUnhealthy && (
+          <div className="mb-4 animate-slide-up p-3 bg-red-50 border border-red-200 rounded-xl relative z-10 text-center">
+            <div className="flex items-center gap-2 mb-2 text-red-600 justify-center">
+              <AlertCircle size={16} />
+              <p className="text-xs font-bold">Pola makanmu mulai tidak sehat!</p>
+            </div>
+            <a
+              href="https://www.halodoc.com/tanya-dokter"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full bg-red-500 text-white text-sm py-2 rounded-lg font-bold hover:bg-red-600 transition shadow-md flex items-center justify-center gap-2"
+            >
+              🚑 Konsultasi Dokter
+            </a>
+          </div>
+        )}
+      </div>
+
+      <Education />
     </div>
-    <div className="space-y-4 animate-fade-in">
-      <h2 className="text-xl font-bold text-gray-800 px-1">Edukasi Lambung</h2>
-
-      <div className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-yellow-400">
-        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-          <AlertCircle size={20} className="text-yellow-500" /> Pola Makan 4 Jam
-        </h3>
-        <p className="text-sm text-gray-600 leading-relaxed">Lambung kosong terlalu lama dapat meningkatkan produksi asam. Makan porsi kecil tapi sering (tiap 4 jam) membantu menetralkan asam lambung secara alami.</p>
-      </div>
-
-      <div className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-green-500">
-        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-          <Apple size={20} className="text-green-500" /> Makanan Sahabat Lambung
-        </h3>
-        <ul className="text-sm text-gray-600 list-disc ml-5 space-y-1">
-          <li>Oatmeal (Menyerap asam)</li>
-          <li>Jahe (Anti-inflamasi)</li>
-          <li>Sayuran hijau (Brokoli, Bayam)</li>
-          <li>Daging tanpa lemak</li>
-          <li>Pisang & Melon</li>
-        </ul>
-      </div>
-
-      <div className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-red-500">
-        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-          <Coffee size={20} className="text-red-500" /> Pemicu GERD
-        </h3>
-        <p className="text-sm text-gray-600">Hindari makanan pedas, gorengan, kopi, cokelat, dan buah yang terlalu asam (jeruk/lemon) saat perut kosong.</p>
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 const TrackerView = ({ nextMealTime, setNextMealTime, requestNotification, setHealth }) => {
   const [timeLeft, setTimeLeft] = useState("");
@@ -151,7 +166,7 @@ const TrackerView = ({ nextMealTime, setNextMealTime, requestNotification, setHe
         if (Notification.permission === "granted") {
           new Notification("Lambora Reminder", {
             body: "Sudah 4 jam! Waktunya isi perut agar asam lambung tidak naik.",
-            icon: "https://cdn-icons-png.flaticon.com/512/706/706164.png",
+            icon: "lambora-logokotak.jpg",
           });
         }
 
@@ -171,7 +186,7 @@ const TrackerView = ({ nextMealTime, setNextMealTime, requestNotification, setHe
   const startTimer = () => {
     requestNotification();
     // Set 4 jam dari sekarang
-    const fourHoursLater = new Date().getTime() + 4 * 60 * 60 * 1000;
+    const fourHoursLater = new Date().getTime() + 0.001 * 60 * 60 * 1000;
     // const fourHoursLater = new Date().getTime() + (10 * 1000); // UNCOMMENT UNTUK TESTING (10 detik)
     setNextMealTime(fourHoursLater);
   };
@@ -209,40 +224,7 @@ const TrackerView = ({ nextMealTime, setNextMealTime, requestNotification, setHe
   );
 };
 
-const EducationView = () => (
-  <div className="space-y-4 animate-fade-in">
-    <h2 className="text-xl font-bold text-gray-800 px-1">Edukasi Lambung</h2>
-
-    <div className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-yellow-400">
-      <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-        <AlertCircle size={20} className="text-yellow-500" /> Pola Makan 4 Jam
-      </h3>
-      <p className="text-sm text-gray-600 leading-relaxed">Lambung kosong terlalu lama dapat meningkatkan produksi asam. Makan porsi kecil tapi sering (tiap 4 jam) membantu menetralkan asam lambung secara alami.</p>
-    </div>
-
-    <div className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-green-500">
-      <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-        <Apple size={20} className="text-green-500" /> Makanan Sahabat Lambung
-      </h3>
-      <ul className="text-sm text-gray-600 list-disc ml-5 space-y-1">
-        <li>Oatmeal (Menyerap asam)</li>
-        <li>Jahe (Anti-inflamasi)</li>
-        <li>Sayuran hijau (Brokoli, Bayam)</li>
-        <li>Daging tanpa lemak</li>
-        <li>Pisang & Melon</li>
-      </ul>
-    </div>
-
-    <div className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-red-500">
-      <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-        <Coffee size={20} className="text-red-500" /> Pemicu GERD
-      </h3>
-      <p className="text-sm text-gray-600">Hindari makanan pedas, gorengan, kopi, cokelat, dan buah yang terlalu asam (jeruk/lemon) saat perut kosong.</p>
-    </div>
-  </div>
-);
-
-const GameView = ({ health, setHealth, nextMealTime }) => {
+const GameView = ({ health, setHealth, nextMealTime, badFoodCount, setBadFoodCount }) => {
   const [characterState, setCharacterState] = useState("normal"); // normal, happy, sick
   const [feedback, setFeedback] = useState("");
   const [showMenu, setShowMenu] = useState(false); // State untuk menampilkan menu makanan
@@ -266,13 +248,20 @@ const GameView = ({ health, setHealth, nextMealTime }) => {
 
     if (food.type === "good") {
       setHealth((prev) => Math.min(100, prev + 5));
+      setBadFoodCount((prev) => prev - 1);
       setCharacterState("happy");
       setTimeout(() => setCharacterState("normal"), 1500);
     } else {
-      setHealth((prev) => Math.max(0, prev - 10)); // Request: berkurang jika ga sehat
+      setHealth((prev) => Math.max(0, prev - 10));
+      setBadFoodCount((prev) => prev + 1); // Tambah counter makanan buruk (via Props dari Global)
       setCharacterState("sick");
       setTimeout(() => setCharacterState("normal"), 2000);
     }
+  };
+
+  const resetGame = () => {
+    setHealth(100);
+    setBadFoodCount(0); // Reset juga counter makanan buruk
   };
 
   // Visual Karakter
@@ -313,6 +302,19 @@ const GameView = ({ health, setHealth, nextMealTime }) => {
           {feedback && <div className="absolute top-0 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold shadow-sm animate-bounce text-gray-600 z-10">{feedback}</div>}
         </div>
 
+        {/* Peringatan Konsultasi (Muncul jika makan buruk >= 3 kali) */}
+        {badFoodCount >= 3 && health > 0 && (
+          <div className="mb-4 animate-slide-up p-3 bg-red-50 border border-red-200 rounded-xl relative z-10">
+            <div className="flex items-center gap-2 mb-2 text-red-600 justify-center">
+              <AlertCircle size={16} />
+              <p className="text-xs font-bold">Pola makanmu mulai tidak sehat!</p>
+            </div>
+            <a href="https://www.halodoc.com/tanya-dokter" target="_blank" rel="noopener noreferrer" className="block w-full bg-red-500 text-white text-sm py-2 rounded-lg font-bold hover:bg-red-600 transition shadow-md">
+              🚑 Konsultasi Dokter
+            </a>
+          </div>
+        )}
+
         {/* Controls */}
         <button
           onClick={() => setShowMenu(true)}
@@ -327,7 +329,7 @@ const GameView = ({ health, setHealth, nextMealTime }) => {
         <p className="mt-4 text-xs text-gray-400">*Pilih makanan sehat untuk menambah HP!</p>
 
         {health <= 0 && (
-          <button onClick={() => setHealth(100)} className="mt-4 text-sm text-blue-500 font-bold underline cursor-pointer">
+          <button onClick={resetGame} className="mt-4 text-sm text-blue-500 font-bold underline cursor-pointer">
             Reset Game
           </button>
         )}
